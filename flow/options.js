@@ -1,8 +1,13 @@
 declare type InternalComponentOptions = {
+  // 是否为组件
   _isComponent: true;
+  // 父组件
   parent: Component;
+  // 父组件虚拟DOM
   _parentVnode: VNode;
+  // render函数
   render?: Function;
+  // 静态渲染函数
   staticRenderFns?: Array<Function>
 };
 

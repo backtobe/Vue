@@ -172,6 +172,7 @@
   /**
    * Camelize a hyphen-delimited string.
    */
+  // 中横线连接 转换为小驼峰
   var camelizeRE = /-(\w)/g;
   var camelize = cached(function (str) {
     return str.replace(camelizeRE, function (_, c) { return c ? c.toUpperCase() : ''; })
@@ -527,7 +528,7 @@
   var hasProto = '__proto__' in {};
 
   // Browser environment sniffing
-  var inBrowser = typeof window !== 'undefined';
+  var inBrowser = typeof window !== 'undefined'; // 浏览器环境下才有window
   var inWeex = typeof WXEnvironment !== 'undefined' && !!WXEnvironment.platform;
   var weexPlatform = inWeex && WXEnvironment.platform.toLowerCase();
   var UA = inBrowser && window.navigator.userAgent.toLowerCase();
@@ -1438,7 +1439,7 @@
       while (i--) {
         val = props[i];
         if (typeof val === 'string') {
-          name = camelize(val);
+          name = camelize(val); //小驼峰化
           res[name] = { type: null };
         } else {
           warn('props must be strings when using array syntax.');
@@ -1519,15 +1520,15 @@
    * Core utility used in both instantiation and inheritance.
    */
   function mergeOptions (
-    parent,
-    child,
-    vm
+    parent, // 父级的option
+    child, // 自己的option
+    vm // vue实例
   ) {
     {
       checkComponents(child);
     }
 
-    if (typeof child === 'function') {
+    if (typeof child === 'function') { // child是Vue实例
       child = child.options;
     }
 
@@ -1784,18 +1785,19 @@
       " Expected " + (expectedTypes.map(capitalize).join(', '));
     var expectedType = expectedTypes[0];
     var receivedType = toRawType(value);
-    var expectedValue = styleValue(value, expectedType);
-    var receivedValue = styleValue(value, receivedType);
     // check if we need to specify expected value
-    if (expectedTypes.length === 1 &&
-        isExplicable(expectedType) &&
-        !isBoolean(expectedType, receivedType)) {
-      message += " with value " + expectedValue;
+    if (
+      expectedTypes.length === 1 &&
+      isExplicable(expectedType) &&
+      isExplicable(typeof value) &&
+      !isBoolean(expectedType, receivedType)
+    ) {
+      message += " with value " + (styleValue(value, expectedType));
     }
     message += ", got " + receivedType + " ";
     // check if we need to specify received value
     if (isExplicable(receivedType)) {
-      message += "with value " + receivedValue + ".";
+      message += "with value " + (styleValue(value, receivedType)) + ".";
     }
     return message
   }
@@ -1810,9 +1812,9 @@
     }
   }
 
+  var EXPLICABLE_TYPES = ['string', 'number', 'boolean'];
   function isExplicable (value) {
-    var explicitTypes = ['string', 'number', 'boolean'];
-    return explicitTypes.some(function (elem) { return value.toLowerCase() === elem; })
+    return EXPLICABLE_TYPES.some(function (elem) { return value.toLowerCase() === elem; })
   }
 
   function isBoolean () {
@@ -2011,7 +2013,10 @@
   var mark;
   var measure;
 
+  // 性能监控相关
   {
+    // 在浏览器模式下 perf 赋值为 window.performance
+    // 其他条件为 false
     var perf = inBrowser && window.performance;
     /* istanbul ignore if */
     if (
@@ -3273,8 +3278,10 @@
   }
 
   function createComponentInstanceForVnode (
-    vnode, // we know it's MountedComponentVNode but flow doesn't
-    parent // activeInstance in lifecycle state
+    // we know it's MountedComponentVNode but flow doesn't
+    vnode,
+    // activeInstance in lifecycle state
+    parent
   ) {
     var options = {
       _isComponent: true,
@@ -3760,8 +3767,11 @@
 
   /*  */
 
+  // 初始化事件
   function initEvents (vm) {
+    // 初始化_events
     vm._events = Object.create(null);
+    // 初始化_hasHookEvent
     vm._hasHookEvent = false;
     // init parent attached events
     var listeners = vm.$options._parentListeners;
@@ -3906,26 +3916,34 @@
     }
   }
 
+  // 初始化生命周期
   function initLifecycle (vm) {
     var options = vm.$options;
 
-    // locate first non-abstract parent
+    // 获取 实例的parent
     var parent = options.parent;
+    // locate first non-abstract parent
+    // 定位到第一个非抽象组件 抽象组件 <keep-alive>、<transition>、<transition-group>
     if (parent && !options.abstract) {
       while (parent.$options.abstract && parent.$parent) {
         parent = parent.$parent;
       }
+      // 父级组件$children添加当前实例
       parent.$children.push(vm);
     }
-
+    // 为当前实例添加 $parent 父级组件
     vm.$parent = parent;
+    // 为当前实例添加 $root 根组件
     vm.$root = parent ? parent.$root : vm;
-
+    
+    // 初始化 $children
     vm.$children = [];
+    // 初始化 $refs
     vm.$refs = {};
 
+    // 初始化 _watcher _watcher _directInactive _isMounted _isDestroyed _isBeingDestroyed
     vm._watcher = null;
-    vm._inactive = null;
+    vm._watcher = null;
     vm._directInactive = false;
     vm._isMounted = false;
     vm._isDestroyed = false;
@@ -4020,13 +4038,19 @@
     el,
     hydrating
   ) {
+    // 备份el
     vm.$el = el;
+    // 无render函数
     if (!vm.$options.render) {
+      // 添加render函数 空node
       vm.$options.render = createEmptyVNode;
+      // 非生产环境
       {
         /* istanbul ignore if */
+        // 有template并且template的第一个字符为#或者有el
         if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
           vm.$options.el || el) {
+            // runtime-only 运行时警告
           warn(
             'You are using the runtime-only build of Vue where the template ' +
             'compiler is not available. Either pre-compile the templates into ' +
@@ -4034,6 +4058,7 @@
             vm
           );
         } else {
+          // 其他警告
           warn(
             'Failed to mount component: template or render function not defined.',
             vm
@@ -4041,15 +4066,22 @@
         }
       }
     }
+    // hook
     callHook(vm, 'beforeMount');
 
+    // 更新组件回调函数
     var updateComponent;
     /* istanbul ignore if */
+    // 非生产环境 前端性能监控
     if (config.performance && mark) {
       updateComponent = function () {
+        // 备份name
         var name = vm._name;
+        // 备份vm id
         var id = vm._uid;
+        // ？？？
         var startTag = "vue-perf-start:" + id;
+        // ？？？
         var endTag = "vue-perf-end:" + id;
 
         mark(startTag);
@@ -4063,6 +4095,7 @@
         measure(("vue " + name + " patch"), startTag, endTag);
       };
     } else {
+      // 生产环境下
       updateComponent = function () {
         vm._update(vm._render(), hydrating);
       };
@@ -4071,7 +4104,20 @@
     // we set this to vm._watcher inside the watcher's constructor
     // since the watcher's initial patch may call $forceUpdate (e.g. inside child
     // component's mounted hook), which relies on vm._watcher being already defined
+    /*
+    class Watcher {
+      constructor (
+        vm: Component,
+        expOrFn: string | Function,
+        cb: Function,
+        options?: ?Object,
+        isRenderWatcher?: boolean
+      ) {
+      }
+    }
+    */
     new Watcher(vm, updateComponent, noop, {
+      // options
       before: function before () {
         if (vm._isMounted && !vm._isDestroyed) {
           callHook(vm, 'beforeUpdate');
@@ -4211,6 +4257,7 @@
   }
 
   function callHook (vm, hook) {
+    // hook 生命周期
     // #7573 disable dep collection when invoking lifecycle hooks
     pushTarget();
     var handlers = vm.$options[hook];
@@ -4955,14 +5002,19 @@
 
   /*  */
 
-  var uid$3 = 0;
+  var uid$3 = 0; // 初始化Vue实例id
 
+  // 初始化混入
   function initMixin (Vue) {
+    // 在原型上添加_init方法
     Vue.prototype._init = function (options) {
+      // debugger
+      // vue实例
       var vm = this;
-      // a uid
+      // a uid id值
       vm._uid = uid$3++;
-
+      console.log('uid',uid$3);
+      // 前端性能监控
       var startTag, endTag;
       /* istanbul ignore if */
       if (config.performance && mark) {
@@ -4974,24 +5026,27 @@
       // a flag to avoid this being observed
       vm._isVue = true;
       // merge options
-      if (options && options._isComponent) {
+      if (options && options._isComponent) { // 组件
         // optimize internal component instantiation
         // since dynamic options merging is pretty slow, and none of the
         // internal component options needs special treatment.
+        // 挂载$options
         initInternalComponent(vm, options);
       } else {
         vm.$options = mergeOptions(
-          resolveConstructorOptions(vm.constructor),
-          options || {},
+          resolveConstructorOptions(vm.constructor), // Vue 原型上的属性 
+          options || {}, // 自己的 options
           vm
         );
       }
       /* istanbul ignore else */
+      // 处理_renderProxy ???
       {
         initProxy(vm);
       }
       // expose real self
       vm._self = vm;
+      // 初始化生命周期
       initLifecycle(vm);
       initEvents(vm);
       initRender(vm);
@@ -5002,6 +5057,7 @@
       callHook(vm, 'created');
 
       /* istanbul ignore if */
+      // 前端性能监控
       if (config.performance && mark) {
         vm._name = formatComponentName(vm, false);
         mark(endTag);
@@ -5009,6 +5065,7 @@
       }
 
       if (vm.$options.el) {
+        // 执行挂载函数
         vm.$mount(vm.$options.el);
       }
     };
@@ -5016,6 +5073,7 @@
 
   function initInternalComponent (vm, options) {
     var opts = vm.$options = Object.create(vm.constructor.options);
+    // 操作opts就是操作vm.$options
     // doing this because it's faster than dynamic enumeration.
     var parentVnode = options._parentVnode;
     opts.parent = options.parent;
@@ -5033,7 +5091,9 @@
     }
   }
 
+  // 解析构造器的options
   function resolveConstructorOptions (Ctor) {
+    // Ctor 构造器 Vue原型
     var options = Ctor.options;
     if (Ctor.super) {
       var superOptions = resolveConstructorOptions(Ctor.super);
@@ -5073,6 +5133,7 @@
   function Vue (options) {
     if (!(this instanceof Vue)
     ) {
+      // 非开发环境并且不是Vue的实例 发出警告
       warn('Vue is a constructor and should be called with the `new` keyword');
     }
     this._init(options);
@@ -5480,7 +5541,7 @@
     'default,defaultchecked,defaultmuted,defaultselected,defer,disabled,' +
     'enabled,formnovalidate,hidden,indeterminate,inert,ismap,itemscope,loop,multiple,' +
     'muted,nohref,noresize,noshade,novalidate,nowrap,open,pauseonexit,readonly,' +
-    'required,reversed,scoped,seamless,selected,sortable,translate,' +
+    'required,reversed,scoped,seamless,selected,sortable,' +
     'truespeed,typemustmatch,visible'
   );
 
@@ -5660,16 +5721,21 @@
    * Query an element selector if it's not an element already.
    */
   function query (el) {
+    // 字符串
     if (typeof el === 'string') {
+      // 全局查找元素
       var selected = document.querySelector(el);
+      // 没找到
       if (!selected) {
-        warn(
-          'Cannot find element: ' + el
-        );
+        // 非生产环境 报警告
+        warn('Cannot find element: ' + el);
+        // 创建一个空div元素
         return document.createElement('div')
       }
+      // 找到后 返回元素
       return selected
     } else {
+      // 元素
       return el
     }
   }
@@ -6705,7 +6771,7 @@
       cur = attrs[key];
       old = oldAttrs[key];
       if (old !== cur) {
-        setAttr(elm, key, cur);
+        setAttr(elm, key, cur, vnode.data.pre);
       }
     }
     // #4391: in IE9, setting type can reset value for input[type=radio]
@@ -6725,8 +6791,8 @@
     }
   }
 
-  function setAttr (el, key, value) {
-    if (el.tagName.indexOf('-') > -1) {
+  function setAttr (el, key, value, isInPre) {
+    if (isInPre || el.tagName.indexOf('-') > -1) {
       baseSetAttr(el, key, value);
     } else if (isBooleanAttr(key)) {
       // set attribute for blank value
@@ -9247,7 +9313,7 @@
 
   // Regular Expressions for parsing tags and attributes
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
-  var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
+  var dynamicArgAttribute = /^\s*((?:v-[\w-]+:|@|:|#)\[[^=]+?\][^\s"'<>\/=]*)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/;
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z" + (unicodeRegExp.source) + "]*";
   var qnameCapture = "((?:" + ncname + "\\:)?" + ncname + ")";
   var startTagOpen = new RegExp(("^<" + qnameCapture));
@@ -10850,9 +10916,9 @@
         code += genModifierCode;
       }
       var handlerCode = isMethodPath
-        ? ("return " + (handler.value) + "($event)")
+        ? ("return " + (handler.value) + ".apply(null, arguments)")
         : isFunctionExpression
-          ? ("return (" + (handler.value) + ")($event)")
+          ? ("return (" + (handler.value) + ").apply(null, arguments)")
           : isFunctionInvocation
             ? ("return " + (handler.value))
             : handler.value;

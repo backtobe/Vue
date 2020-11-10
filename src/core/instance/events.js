@@ -9,12 +9,17 @@ import {
 } from '../util/index'
 import { updateListeners } from '../vdom/helpers/index'
 
+// 初始化事件
 export function initEvents (vm: Component) {
+  // 初始化_events
   vm._events = Object.create(null)
+  // 初始化_hasHookEvent
   vm._hasHookEvent = false
   // init parent attached events
+  // 初始化父级附附加事件
   const listeners = vm.$options._parentListeners
   if (listeners) {
+    // 更新组件监听
     updateComponentListeners(vm, listeners)
   }
 }
@@ -44,8 +49,11 @@ export function updateComponentListeners (
   listeners: Object,
   oldListeners: ?Object
 ) {
+  // 保存当前vm实例为全局target
   target = vm
+  // 更新监听
   updateListeners(listeners, oldListeners || {}, add, remove, createOnceHandler, vm)
+  // 清除全局target
   target = undefined
 }
 

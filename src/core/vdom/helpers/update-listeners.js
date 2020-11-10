@@ -11,6 +11,38 @@ import {
   isPlainObject
 } from 'shared/util'
 
+/*
+事件修饰符正常化
+运用render函数 事件监听不能使用事件修饰符
+  -------------------------------------
+  修饰符	                      |   前缀
+  passive	                     |    &
+  capture	                     |    !
+  once	                       |    ~
+  capture.once 或 once.capture |    ~!
+  --------------------------------------
+  render(h){
+    let self = this;
+    return h('input',
+    {
+      domProps:
+        {
+          value:self.value
+        }
+      }
+    ),
+    // v-model
+    on: {
+      input(event) {
+        self.$emit('input',event.target.value)
+      },
+      '!click': this.doThisInCapturingMode,
+      '~keyup': this.doThisOnce,
+      '~!mouseover': this.doThisOnceInCapturingMode
+    }
+  }
+*/
+
 const normalizeEvent = cached((name: string): {
   name: string,
   once: boolean,
@@ -25,6 +57,8 @@ const normalizeEvent = cached((name: string): {
   name = once ? name.slice(1) : name
   const capture = name.charAt(0) === '!'
   name = capture ? name.slice(1) : name
+  // name 真实事件
+  // passive once capture 事件修饰符
   return {
     name,
     once,
@@ -51,16 +85,18 @@ export function createFnInvoker (fns: Function | Array<Function>, vm: ?Component
 }
 
 export function updateListeners (
-  on: Object,
-  oldOn: Object,
-  add: Function,
+  on: Object, // listener
+  oldOn: Object, // oldListener
+  add: Function, 
   remove: Function,
   createOnceHandler: Function,
   vm: Component
 ) {
   let name, def, cur, old, event
   for (name in on) {
+    // 当前事件
     def = cur = on[name]
+    // 原来事件
     old = oldOn[name]
     event = normalizeEvent(name)
     /* istanbul ignore if */

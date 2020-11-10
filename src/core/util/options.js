@@ -305,7 +305,7 @@ function normalizeProps (options: Object, vm: ?Component) {
     while (i--) {
       val = props[i]
       if (typeof val === 'string') {
-        name = camelize(val)
+        name = camelize(val) //小驼峰化
         res[name] = { type: null }
       } else if (process.env.NODE_ENV !== 'production') {
         warn('props must be strings when using array syntax.')
@@ -386,15 +386,15 @@ function assertObjectType (name: string, value: any, vm: ?Component) {
  * Core utility used in both instantiation and inheritance.
  */
 export function mergeOptions (
-  parent: Object,
-  child: Object,
-  vm?: Component
+  parent: Object, // 父级的option
+  child: Object, // 自己的option
+  vm?: Component // vue实例
 ): Object {
   if (process.env.NODE_ENV !== 'production') {
     checkComponents(child)
   }
 
-  if (typeof child === 'function') {
+  if (typeof child === 'function') { // child是Vue实例
     child = child.options
   }
 

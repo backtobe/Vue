@@ -10,14 +10,19 @@ import { initLifecycle, callHook } from './lifecycle'
 import { initProvide, initInjections } from './inject'
 import { extend, mergeOptions, formatComponentName } from '../util/index'
 
-let uid = 0
+let uid = 0 // 初始化Vue实例id
 
+// 初始化混入
 export function initMixin (Vue: Class<Component>) {
+  // 在原型上添加_init方法
   Vue.prototype._init = function (options?: Object) {
+    // debugger
+    // vue实例
     const vm: Component = this
-    // a uid
+    // a uid id值
     vm._uid = uid++
-
+    console.log('uid',uid)
+    // 前端性能监控
     let startTag, endTag
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
@@ -29,19 +34,21 @@ export function initMixin (Vue: Class<Component>) {
     // a flag to avoid this being observed
     vm._isVue = true
     // merge options
-    if (options && options._isComponent) {
+    if (options && options._isComponent) { // 组件
       // optimize internal component instantiation
       // since dynamic options merging is pretty slow, and none of the
       // internal component options needs special treatment.
+      // 挂载$options
       initInternalComponent(vm, options)
     } else {
       vm.$options = mergeOptions(
-        resolveConstructorOptions(vm.constructor),
-        options || {},
+        resolveConstructorOptions(vm.constructor), // Vue 原型上的属性 
+        options || {}, // 自己的 options
         vm
       )
     }
     /* istanbul ignore else */
+    // 处理_renderProxy ???
     if (process.env.NODE_ENV !== 'production') {
       initProxy(vm)
     } else {
@@ -49,7 +56,9 @@ export function initMixin (Vue: Class<Component>) {
     }
     // expose real self
     vm._self = vm
+    // 初始化生命周期
     initLifecycle(vm)
+    // 初始化事件
     initEvents(vm)
     initRender(vm)
     callHook(vm, 'beforeCreate')
@@ -59,6 +68,7 @@ export function initMixin (Vue: Class<Component>) {
     callHook(vm, 'created')
 
     /* istanbul ignore if */
+    // 前端性能监控
     if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
       vm._name = formatComponentName(vm, false)
       mark(endTag)
@@ -66,6 +76,7 @@ export function initMixin (Vue: Class<Component>) {
     }
 
     if (vm.$options.el) {
+      // 执行挂载函数
       vm.$mount(vm.$options.el)
     }
   }
@@ -73,6 +84,7 @@ export function initMixin (Vue: Class<Component>) {
 
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
   const opts = vm.$options = Object.create(vm.constructor.options)
+  // 操作opts就是操作vm.$options
   // doing this because it's faster than dynamic enumeration.
   const parentVnode = options._parentVnode
   opts.parent = options.parent
@@ -90,7 +102,9 @@ export function initInternalComponent (vm: Component, options: InternalComponent
   }
 }
 
+// 解析构造器的options
 export function resolveConstructorOptions (Ctor: Class<Component>) {
+  // Ctor 构造器 Vue原型
   let options = Ctor.options
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)

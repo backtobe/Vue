@@ -29,26 +29,34 @@ export function setActiveInstance(vm: Component) {
   }
 }
 
+// 初始化生命周期
 export function initLifecycle (vm: Component) {
   const options = vm.$options
 
-  // locate first non-abstract parent
+  // 获取 实例的parent
   let parent = options.parent
+  // locate first non-abstract parent
+  // 定位到第一个非抽象组件 抽象组件 <keep-alive>、<transition>、<transition-group>
   if (parent && !options.abstract) {
     while (parent.$options.abstract && parent.$parent) {
       parent = parent.$parent
     }
+    // 父级组件$children添加当前实例
     parent.$children.push(vm)
   }
-
+  // 为当前实例添加 $parent 父级组件
   vm.$parent = parent
+  // 为当前实例添加 $root 根组件
   vm.$root = parent ? parent.$root : vm
-
+  
+  // 初始化 $children
   vm.$children = []
+  // 初始化 $refs
   vm.$refs = {}
 
+  // 初始化 _watcher _watcher _directInactive _isMounted _isDestroyed _isBeingDestroyed
   vm._watcher = null
-  vm._inactive = null
+  vm._watcher = null
   vm._directInactive = false
   vm._isMounted = false
   vm._isDestroyed = false
@@ -143,13 +151,19 @@ export function mountComponent (
   el: ?Element,
   hydrating?: boolean
 ): Component {
+  // 备份el
   vm.$el = el
+  // 无render函数
   if (!vm.$options.render) {
+    // 添加render函数 空node
     vm.$options.render = createEmptyVNode
+    // 非生产环境
     if (process.env.NODE_ENV !== 'production') {
       /* istanbul ignore if */
+      // 有template并且template的第一个字符为#或者有el
       if ((vm.$options.template && vm.$options.template.charAt(0) !== '#') ||
         vm.$options.el || el) {
+          // runtime-only 运行时警告
         warn(
           'You are using the runtime-only build of Vue where the template ' +
           'compiler is not available. Either pre-compile the templates into ' +
@@ -157,6 +171,7 @@ export function mountComponent (
           vm
         )
       } else {
+        // 其他警告
         warn(
           'Failed to mount component: template or render function not defined.',
           vm
@@ -164,15 +179,22 @@ export function mountComponent (
       }
     }
   }
+  // hook
   callHook(vm, 'beforeMount')
 
+  // 更新组件回调函数
   let updateComponent
   /* istanbul ignore if */
+  // 非生产环境 前端性能监控
   if (process.env.NODE_ENV !== 'production' && config.performance && mark) {
     updateComponent = () => {
+      // 备份name
       const name = vm._name
+      // 备份vm id
       const id = vm._uid
+      // ？？？
       const startTag = `vue-perf-start:${id}`
+      // ？？？
       const endTag = `vue-perf-end:${id}`
 
       mark(startTag)
@@ -186,6 +208,7 @@ export function mountComponent (
       measure(`vue ${name} patch`, startTag, endTag)
     }
   } else {
+    // 生产环境下
     updateComponent = () => {
       vm._update(vm._render(), hydrating)
     }
@@ -194,7 +217,20 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+  /*
+  class Watcher {
+    constructor (
+      vm: Component,
+      expOrFn: string | Function,
+      cb: Function,
+      options?: ?Object,
+      isRenderWatcher?: boolean
+    ) {
+    }
+  }
+  */
   new Watcher(vm, updateComponent, noop, {
+    // options
     before () {
       if (vm._isMounted && !vm._isDestroyed) {
         callHook(vm, 'beforeUpdate')
@@ -334,6 +370,7 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
 }
 
 export function callHook (vm: Component, hook: string) {
+  // hook 生命周期
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
   const handlers = vm.$options[hook]
