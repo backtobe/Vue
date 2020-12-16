@@ -34,10 +34,17 @@ extend(Vue.options.components, platformComponents)
 Vue.prototype.__patch__ = inBrowser ? patch : noop
 
 // public mount method
+/**
+ * 公共挂载方法
+ * @param {String| Element} el 
+ * @param {Boolean} hydrating 
+ */
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
+  debugger
+  // 浏览器环境el转换为Element
   el = el && inBrowser ? query(el) : undefined
   return mountComponent(this, el, hydrating)
 }

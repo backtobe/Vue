@@ -9,20 +9,24 @@ import { query } from './util/index'
 import { compileToFunctions } from './compiler/index'
 import { shouldDecodeNewlines, shouldDecodeNewlinesForHref } from './util/compat'
 
+// template #id 转化为innerHTML
 const idToTemplate = cached(id => {
   const el = query(id)
   return el && el.innerHTML
 })
 
 const mount = Vue.prototype.$mount
+// 重写原型$mount方法 
 Vue.prototype.$mount = function (
   el?: string | Element,
   hydrating?: boolean
 ): Component {
+  debugger
   el = el && query(el)
-
-  /* istanbul ignore if */
+  /* istanbul ignore if */ 
+  // 允许某些代码不计入覆盖率 测试统计忽略
   if (el === document.body || el === document.documentElement) {
+    // el元素为body 或者 document 触发警告并截止
     process.env.NODE_ENV !== 'production' && warn(
       `Do not mount Vue to <html> or <body> - mount to normal elements instead.`
     )
@@ -31,12 +35,18 @@ Vue.prototype.$mount = function (
 
   const options = this.$options
   // resolve template/el and convert to render function
-  if (!options.render) {
-    let template = options.template
+  // 解析template/el并转换为渲染函数
+  // 优先级render> template > el
+  if (!options.render) { // 非render函数
+    let template = options.template // 获取template
+    console.log(template, 'template')
     if (template) {
+      // template 类型
+      // https://learnku.com/articles/4382/seven-ways-to-define-a-component-template-by-vuejs
+      // 1、字符串：普通字符串、模板字符串、#id
       if (typeof template === 'string') {
-        if (template.charAt(0) === '#') {
-          template = idToTemplate(template)
+        if (template.charAt(0) === '#') { // #id 
+          template = idToTemplate(template) // 获取innerHtml
           /* istanbul ignore if */
           if (process.env.NODE_ENV !== 'production' && !template) {
             warn(
@@ -45,7 +55,7 @@ Vue.prototype.$mount = function (
             )
           }
         }
-      } else if (template.nodeType) {
+      } else if (template.nodeType) { // 
         template = template.innerHTML
       } else {
         if (process.env.NODE_ENV !== 'production') {
@@ -79,6 +89,7 @@ Vue.prototype.$mount = function (
       }
     }
   }
+  // 执行Vue.prototype.$mount
   return mount.call(this, el, hydrating)
 }
 
@@ -97,5 +108,4 @@ function getOuterHTML (el: Element): string {
 }
 
 Vue.compile = compileToFunctions
-
 export default Vue

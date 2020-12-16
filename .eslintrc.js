@@ -10,12 +10,12 @@ module.exports = {
     node: true,
     browser: true
   },
-  plugins: [
-    "flowtype"
-  ],
+  // plugins: [
+  //   "flowtype"
+  // ],
   extends: [
-    "eslint:recommended",
-    "plugin:flowtype/recommended"
+    // "eslint:recommended",
+    // "plugin:flowtype/recommended"
   ],
   globals: {
     "__WEEX__": true,

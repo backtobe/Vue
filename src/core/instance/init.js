@@ -16,12 +16,10 @@ let uid = 0 // 初始化Vue实例id
 export function initMixin (Vue: Class<Component>) {
   // 在原型上添加_init方法
   Vue.prototype._init = function (options?: Object) {
-    // debugger
     // vue实例
     const vm: Component = this
     // a uid id值
     vm._uid = uid++
-    console.log('uid',uid)
     // 前端性能监控
     let startTag, endTag
     /* istanbul ignore if */
@@ -31,14 +29,15 @@ export function initMixin (Vue: Class<Component>) {
       mark(startTag)
     }
 
-    // a flag to avoid this being observed
+    // a flag to avoid this being observed 避免被监测的标志
     vm._isVue = true
-    // merge options
-    if (options && options._isComponent) { // 组件
-      // optimize internal component instantiation
-      // since dynamic options merging is pretty slow, and none of the
-      // internal component options needs special treatment.
-      // 挂载$options
+    console.log(vm,options)
+    // merge options 合并options
+    if (options && options._isComponent) {
+      // optimize internal component instantiation 优化内部组件实例化
+      // since dynamic options merging is pretty slow, and none of the 因为动态选项合并非常慢，而且
+      // internal component options needs special treatment. 内部组件选项需要特殊处理。
+      // 初始化内部组件
       initInternalComponent(vm, options)
     } else {
       vm.$options = mergeOptions(
@@ -74,15 +73,26 @@ export function initMixin (Vue: Class<Component>) {
       mark(endTag)
       measure(`vue ${vm._name} init`, startTag, endTag)
     }
-
+    debugger
     if (vm.$options.el) {
+      // console.log(vm, '$options')
       // 执行挂载函数
       vm.$mount(vm.$options.el)
     }
   }
 }
 
+/**
+ * 初始化内部组件
+ * @param {Vue} vm 
+ * @param {InternalComponentOptions} options 
+ */
 export function initInternalComponent (vm: Component, options: InternalComponentOptions) {
+  // console.log(vm.constructor.options,'vm')
+  // vm 实例 Vue构造函数
+  // vm.__proto__ -> Vue.prototype
+  // vm.__proto__.constructor = Vue.prototype.constructor -> Vue
+  // vm.constructor.options 原型上预制的options
   const opts = vm.$options = Object.create(vm.constructor.options)
   // 操作opts就是操作vm.$options
   // doing this because it's faster than dynamic enumeration.
@@ -106,6 +116,7 @@ export function initInternalComponent (vm: Component, options: InternalComponent
 export function resolveConstructorOptions (Ctor: Class<Component>) {
   // Ctor 构造器 Vue原型
   let options = Ctor.options
+  // 可能是继承的
   if (Ctor.super) {
     const superOptions = resolveConstructorOptions(Ctor.super)
     const cachedSuperOptions = Ctor.superOptions
